@@ -56,7 +56,7 @@ int main(){
 			}
 		else if	(WIFSIGNALED(status)){
 			sprintf(SigReturn, "enseash [signal exit : %d] %%", WTERMSIG(status));
-			write(STDOUT_FILENO,SigReturn, strlen(CodeReturn));
+			write(STDOUT_FILENO,SigReturn, strlen(SigReturn));
 			}	
 	}
 

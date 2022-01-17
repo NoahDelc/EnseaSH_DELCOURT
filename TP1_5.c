@@ -29,7 +29,7 @@ int Duree_ms;            //Duree_ms = spec2 - spec1
 
 int main(){	
 	char cmd[CMD_SIZE];   //La commande tapée au clavier par l'utilisateur
-	pid_t pid;
+	int pid;
 	int status;
 	char CodeReturn[CMD_SIZE];
 	char SigReturn[CMD_SIZE];
@@ -53,8 +53,11 @@ int main(){
 			break;
 		}
 		
+		clock_gettime(CLOCK_REALTIME, &spec1);							//Début de la mesure de durée
+		pid=fork();
+		
 		//Processus Fils
-		if((pid=fork())==0){
+		if(pid==0){
 		clock_gettime(CLOCK_REALTIME, &spec1);							//Début de la mesure de durée
 		execlp(cmd, cmd, ( char * )NULL);								//Execution de la commande entrée
 		
@@ -64,7 +67,7 @@ int main(){
 		else{
 			wait(&status);
 			clock_gettime(CLOCK_REALTIME, &spec2);						//Fin de la mesure de durée
-			Duree_ms= (spec2.tv_nsec-spec1.tv_nsec)/1.0e6;				//Calcul de la durée
+			Duree_ms= (spec2.tv_sec-spec1.tv_sec)*1000 + (spec2.tv_nsec-spec1.tv_nsec)/1.0e6;				//Calcul de la durée
 			}
 		
 		//Etude du statut renvoyé par le fils terminé	
@@ -73,8 +76,8 @@ int main(){
 			write(STDOUT_FILENO,CodeReturn, strlen(CodeReturn));
 			}
 		else if	(WIFSIGNALED(status)){
-			sprintf(SigReturn, "enseash [signal exit : %d] %%", WTERMSIG(status));
-			write(STDOUT_FILENO,SigReturn, strlen(CodeReturn));
+			sprintf(SigReturn, "enseash [signal exit : %dms] %%", WTERMSIG(status));
+			write(STDOUT_FILENO,SigReturn, strlen(SigReturn));
 			}	
 	}
 

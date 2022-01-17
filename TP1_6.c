@@ -1,4 +1,4 @@
-//int main(int argc, char** argv){
+
 
 #include <stdio.h> 
 #include <stdlib.h> 
@@ -30,11 +30,11 @@ int Duree_ms;            //Duree_ms = spec2 - spec1
 
 int main(int argc, char** argv){	
 	char cmd[CMD_SIZE];   //La commande tapée au clavier par l'utilisateur
-	pid_t pid;
+	
 	int status;
 	char CodeReturn[CMD_SIZE];
 	char SigReturn[CMD_SIZE];
-	
+	int pid;
 
 	
 	
@@ -48,23 +48,19 @@ int main(int argc, char** argv){
 		cmd [cmdLenght-1]= '\0';    									//On ajoute '\0' à la fin de la commande
 		
 		
+		
 		//Décomposistion des arguments
 		char* strToken= strtok(cmd, " ");
 		char* args[CMD_SIZE];
-		args[0]=malloc(sizeof(char)*cmdLenght);
+
 		int i=0;
 		
 		while (strToken != NULL){
-			args[i]=strToken;
-			strcat(args[i],"\0");
+			args[i++]=strToken;
 			strToken=strtok(NULL, " ");
-			i=i+1;
-		}
+			}
 			
 			
-		 
-		
-		
 		
 		//Gestion de la commande "exit" et"ctrl+D"
 		if ((strncmp(cmd, ExitToken , strlen(ExitToken)) == 0) || cmdLenght==0)  { 
@@ -72,12 +68,16 @@ int main(int argc, char** argv){
 			break;
 		}
 		
-		//Processus Fils
-		if((pid=fork())==0){
+		
 		clock_gettime(CLOCK_REALTIME, &spec1);							//Début de la mesure de durée
-		execvp(args[0], args);	
-		free(args[0]);										//Execution de la commande entrée (avec arguments)
+		pid=fork();
+		
+		//Processus Fils
+		if(pid==0){
+		args[i]=NULL;
+		execvp(args[0], args);								//Execution de la commande entrée (avec arguments)
 		exit(EXIT_FAILURE);
+		
 		}
 		
 		//Processus Père
@@ -85,7 +85,8 @@ int main(int argc, char** argv){
 			wait(&status);
 			
 			clock_gettime(CLOCK_REALTIME, &spec2);						//Fin de la mesure de durée
-			Duree_ms= (spec2.tv_nsec-spec1.tv_nsec)/1.0e6;				//Calcul de la durée
+			Duree_ms= (spec2.tv_sec-spec1.tv_sec)*1000 + (spec2.tv_nsec-spec1.tv_nsec)/1.0e6;				//Calcul de la durée
+			
 			}
 		
 		//Etude du statut renvoyé par le fils terminé	
@@ -94,7 +95,7 @@ int main(int argc, char** argv){
 			write(STDOUT_FILENO,CodeReturn, strlen(CodeReturn));
 			}
 		else if	(WIFSIGNALED(status)){
-			sprintf(SigReturn, "enseash [signal exit : %d] %%", WTERMSIG(status));
+			sprintf(SigReturn, "enseash [signal exit : %dms] %%", WTERMSIG(status));
 			write(STDOUT_FILENO,SigReturn, strlen(CodeReturn));
 			}	
 	}
