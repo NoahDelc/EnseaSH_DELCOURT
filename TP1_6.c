@@ -1,4 +1,4 @@
-
+//int main(int argc, char** argv){
 
 #include <stdio.h> 
 #include <stdlib.h> 
@@ -20,6 +20,7 @@ const char ExitMsg[] = "Bye bye... \n";
 const char ExitToken[] = "exit";
 
 
+
 struct timespec spec1;   //Definition du timer
 struct timespec spec2;
 int Duree_ms;            //Duree_ms = spec2 - spec1
@@ -27,7 +28,7 @@ int Duree_ms;            //Duree_ms = spec2 - spec1
     
 
 
-int main(){	
+int main(int argc, char** argv){	
 	char cmd[CMD_SIZE];   //La commande tapée au clavier par l'utilisateur
 	pid_t pid;
 	int status;
@@ -47,6 +48,24 @@ int main(){
 		cmd [cmdLenght-1]= '\0';    									//On ajoute '\0' à la fin de la commande
 		
 		
+		//Décomposistion des arguments
+		char* strToken= strtok(cmd, " ");
+		char* args[CMD_SIZE];
+		args[0]=malloc(sizeof(char)*cmdLenght);
+		int i=0;
+		
+		while (strToken != NULL){
+			args[i]=strToken;
+			strcat(args[i],"\0");
+			strToken=strtok(NULL, " ");
+			i=i+1;
+		}
+			
+			
+		 
+		
+		
+		
 		//Gestion de la commande "exit" et"ctrl+D"
 		if ((strncmp(cmd, ExitToken , strlen(ExitToken)) == 0) || cmdLenght==0)  { 
 			write(STDOUT_FILENO, ExitMsg, strlen(ExitMsg));
@@ -56,13 +75,15 @@ int main(){
 		//Processus Fils
 		if((pid=fork())==0){
 		clock_gettime(CLOCK_REALTIME, &spec1);							//Début de la mesure de durée
-		execlp(cmd, cmd, ( char * )NULL);								//Execution de la commande entrée
-		
+		execvp(args[0], args);	
+		free(args[0]);										//Execution de la commande entrée (avec arguments)
 		exit(EXIT_FAILURE);
 		}
+		
 		//Processus Père
 		else{
 			wait(&status);
+			
 			clock_gettime(CLOCK_REALTIME, &spec2);						//Fin de la mesure de durée
 			Duree_ms= (spec2.tv_nsec-spec1.tv_nsec)/1.0e6;				//Calcul de la durée
 			}
